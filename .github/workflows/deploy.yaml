@@ -49,8 +49,7 @@ jobs:
 
     - name: Format Trivy Scan Result
       run: |
-        if [ -s trivy-result.txt ]; then
-          echo "hogehoge"
+        echo "hogehoge"
 
 #    - name: Comment PR with Trivy scan results
 #      uses: marocchino/sticky-pull-request-comment@v2

@@ -3,7 +3,7 @@ name: Deploy to ECR
 on:
  
   push:
-    branches: [ main ]
+    branches: [ feature ]
 
 env:
   ECR_REPOSITORY: flask-app
@@ -33,32 +33,33 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{env.AWS_REGION}}
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+    - name: Build Docker Image
+      run: docker build --build-arg ENV=prod -t local-image:latest -f docker/Dockerfile .
 
-    - name: Build, tag, and push image to Amazon ECR
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}        
-        IMAGE_TAG: ${{ steps.commit.outputs.short }}
+    - name: scan image with trivy
+      uses: aquasecurity/trivy-action@0.24.0
+      with: 
+        image-ref: local-image:latest
+        format: "table"
+        severity: "CRITICAL,HIGH"
+        output: trivy-result.txt
+
+    - name: Check Trivy result file
+      run: cat trivy-result.txt
+
+    - name: Format Trivy Scan Result
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f docker/Dockerfile .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        if [ -s trivy-result.txt ]; then
+          echo -e "## Vulnerability Scan Results\n<details><summary>Details</summary>\n\n\`\`\`\n$(cat trivy-result.txt)\n\`\`\`\n</details>" > formatted-trivy-result.md
+        else
+          echo -e "## Vulnerability Scan Results\nNo vulnerabilities were detected." > formatted-trivy-result.md
+        fi
 
-    - name: Update kube config
-      run: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+    - name: Comment PR with Trivy scan results
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        path: formatted-trivy-result.md
 
-    - name: Deploy to EKS
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}        
-        IMAGE_TAG: ${{ steps.commit.outputs.short }}
-      run: |
-        sed -i.bak "s|DOCKER_IMAGE|$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" manifests/hello-app-deployment.yaml && \
-        kubectl apply -f manifests/hello-app-deployment.yaml
-        kubectl apply -f manifests/hello-app-service.yaml
-
-    - name: Deploy to helm charts EKS
-
-      run: |
-        #        helm install first-app  helm/first-app
-        helm upgrade first-app helm/first-app 
+    - name: Clean up Trivy result file
+      run: rm -f trivy-result.txt formatted-trivy-result.md
+                                                                      fi

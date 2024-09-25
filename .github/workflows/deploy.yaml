@@ -15,7 +15,7 @@ jobs:
   build:
     
     name: Deployment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
 
@@ -60,5 +60,5 @@ jobs:
     - name: Deploy to helm charts EKS
 
       run: |
-        #        helm install  helm/first-app/ --generate-name
-        helm upgrade first-app-1727167311 helm/first-app 
+        #        helm install first-app  helm/first-app
+        helm upgrade first-app helm/first-app 

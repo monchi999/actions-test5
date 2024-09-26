@@ -1,4 +1,5 @@
 ## Code
+hogehoge
 
 * manifests\hello-app-deployment.yaml
 1. The line 21 will fetch our docker image from the ECR repo.

@@ -58,6 +58,7 @@ jobs:
     - name: Comment PR with Trivy scan results
       uses: marocchino/sticky-pull-request-comment@v2
       with:
+        header: header-of-comment
         path: formatted-trivy-result.md
 
     - name: Clean up Trivy result file

@@ -37,34 +37,7 @@ jobs:
       run: docker build --build-arg ENV=prod -t local-image:latest -f docker/Dockerfile .
 
     - name: scan image with trivy
-      uses: aquasecurity/trivy-action@0.24.0
+      uses: lazy-actions/gitrivy@v3
       with: 
-        image-ref: local-image:latest
-        format: "table"
-        severity: "CRITICAL,HIGH"
-        output: trivy-result
-        exit-code: '1'
-
-    - id: trivy_output
-      name: output_file
-      if: failure()
-      run: |
-        output_data=$(cat ./trivy-result)
-        output_data="${output_data//$'\n'/\\n}"
-        echo "::set-output name=std_out::$output_data"
-
-    - name: create_issue
-      if: failure()
-      uses: actions/github-script@v3
-      with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
-        script: |
-            const { GITHUB_SERVER_URL, GITHUB_REPOSITORY, GITHUB_RUN_ID } = process.env
-            var trivy_output_data = `{{ steps.trivy_output.outputs.std_out }}`
-            console.log(trivy_output_data);
-            github.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Security Alert',
-              body: "```"+`${trivy_output_data}`+"```",
-              })
+        token: ${{ secrets.GITHUB_TOKEN }}
+        image: local-image

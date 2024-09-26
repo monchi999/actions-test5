@@ -60,7 +60,7 @@ jobs:
         github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
             const { GITHUB_SERVER_URL, GITHUB_REPOSITORY, GITHUB_RUN_ID } = process.env
-            var trivy_output_data = "${{ steps.trivy_output.outputs.std_out }}"
+            var trivy_output_data = `{{ steps.trivy_output.outputs.std_out }}`
             console.log(trivy_output_data);
             github.issues.create({
               owner: context.repo.owner,

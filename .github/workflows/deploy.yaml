@@ -37,7 +37,17 @@ jobs:
       run: docker build --build-arg ENV=prod -t local-image:latest -f docker/Dockerfile .
 
     - name: scan image with trivy
-      uses: lazy-actions/gitrivy@v3
+      uses: aquasecurity/trivy-action@0.24.0
       with: 
-        token: ${{ secrets.GITHUB_TOKEN }}
-        image: local-image
+        image-ref: local-image:latest
+        format: "table"
+        severity: "CRITICAL,HIGH"
+        output: trivy-result
+        exit-code: '1'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-result'
+

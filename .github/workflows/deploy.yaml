@@ -42,6 +42,7 @@ jobs:
         image-ref: local-image:latest
         format: "sarif"
         severity: "CRITICAL,HIGH"
+        vuln-type: os,library
         output: trivy-result
         exit-code: '1'
 
